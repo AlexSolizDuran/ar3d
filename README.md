@@ -13,7 +13,7 @@ Es un sitio estático puro: no hay build, no hay Node, no hay Next.
 | `gestos.js` | Arrastre sobre el piso, pinza para escalar, giro de dos dedos, doble toque para recentrar. |
 | `puente.js` | `postMessage` ⇄ `window.__comando`. Protocolo congelado. |
 | `vendor/` | `xr.js` + `xr-slam.js` (engine con SLAM), `xrextras.js`, `LICENSE`. |
-| `three/` | three.js y los loaders (GLTF + Draco) servidos desde el mismo origen. |
+| `three/` | `three.module.js` **+ `three.core.js`** (three r185 está partido en dos: sin el segundo, todo el sitio se queda en "Cargando motor…") y los loaders GLTF/Draco. |
 | `draco/` | Decoder de Draco. |
 | `modelos/demo.glb` | NO se usa: el demo se genera por código (cubo de 1 m + regla de 3 m). |
 
