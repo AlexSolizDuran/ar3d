@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>dizelf AR · prueba 1:1</title>
+  <meta name="theme-color" content="#000000" />
+
+  <style>
+    :root { color-scheme: dark; }
+    html, body {
+      margin: 0; height: 100%; overflow: hidden; background: #000;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    /* El canvas lo dimensiona XRExtras.FullWindowCanvas. */
+    #camerafeed {
+      position: fixed; inset: 0; width: 100%; height: 100%;
+      display: block; touch-action: none;
+    }
+
+    #hud {
+      position: fixed; inset: 0; pointer-events: none;
+      display: flex; flex-direction: column; justify-content: space-between;
+      padding: calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset-bottom) + 12px);
+    }
+    .fila { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+    #estado {
+      background: rgba(0, 0, 0, .62); color: #fff;
+      border: 1px solid rgba(255, 255, 255, .18);
+      padding: 8px 12px; border-radius: 999px;
+      font-size: 13px; letter-spacing: .02em;
+    }
+    #estado[data-tipo="ok"]     { border-color: #22d3ee; color: #a5f3fc; }
+    #estado[data-tipo="perdido"]{ border-color: #fbbf24; color: #fde68a; }
+    #estado[data-tipo="error"]  { border-color: #f87171; color: #fecaca; }
+
+    .pista {
+      margin-top: 8px; background: rgba(0, 0, 0, .55); color: #e5e7eb;
+      font-size: 12px; line-height: 1.45; padding: 10px 12px;
+      border-radius: 12px; max-width: 46ch;
+    }
+    .pista b { color: #fff; }
+
+    #error {
+      display: none; margin-top: 8px; background: rgba(127, 29, 29, .92);
+      color: #fff; font-size: 12px; line-height: 1.45;
+      padding: 10px 12px; border-radius: 12px; white-space: pre-wrap;
+      max-width: 46ch;
+    }
+
+    #creditos {
+      pointer-events: auto; color: #9ca3af; font-size: 10px;
+      text-decoration: none; line-height: 1.3;
+    }
+    #creditos:hover { color: #fff; }
+  </style>
+
+  <!-- Engine con SLAM. El chunk xr-slam.js se carga desde ./vendor/ (mismo origen). -->
+  <script src="./vendor/xr.js" async data-preload-chunks="slam"></script>
+  <script src="./vendor/xrextras.js" crossorigin="anonymous"></script>
+  <script type="importmap">
+    { "imports": { "three": "./three/three.module.js" } }
+  </script>
+</head>
+<body>
+  <canvas id="camerafeed"></canvas>
+
+  <div id="hud">
+    <div>
+      <div class="fila">
+        <div id="estado" data-tipo="info">Cargando motor…</div>
+      </div>
+      <div id="error"></div>
+      <div class="pista">
+        <b>Prueba de escala 1:1.</b> El cubo mide 1 m y la regla del piso 3 m.
+        Apunta a una superficie con textura y camina alrededor: el cubo debe quedarse
+        quieto. Un dedo arrastra, dos dedos escalan y rotan. Doble toque recentra.
+      </div>
+    </div>
+
+    <div class="fila" style="justify-content: space-between; align-items: flex-end;">
+      <span style="font-size: 11px; color: #d1d5db;">dizelf AR</span>
+      <a id="creditos"
+         href="https://github.com/8thwall/engine/blob/main/LICENSE"
+         target="_blank" rel="noopener">
+        Engine © 2026 Niantic Spatial, Inc. · licencia
+      </a>
+    </div>
+  </div>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
