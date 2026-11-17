@@ -125,16 +125,10 @@ async function cargarModelo({ url, esDemo }) {
     const unidad = Number(gltf.userData?.unidad ?? 1);
     if (unidad !== 1) casa.scale.setScalar(unidad);
 
-    let tam = centrarEnPiso(casa);
-    let aviso = null;
-
-    // Un GLB en centímetros llega 100× más grande: la cámara queda adentro, el
-    // `far` no alcanza y se ve "nada". Se corrige en vez de dejar el vacío.
-    if (Math.max(tam.x, tam.y, tam.z) > 100) {
-      casa.scale.multiplyScalar(0.01);
-      tam = centrarEnPiso(casa);
-      aviso = 'El modelo venía en centímetros: se muestra a escala 1/100.';
-    }
+    // SIEMPRE 1:1. El export del editor ya sale en metros, así que no se toca
+    // la escala: un plano de 120 m se ve de 120 m. Si algún día llega un GLB en
+    // centímetros se corrige a mano con los botones de escala, nunca solo.
+    const tam = centrarEnPiso(casa);
 
     // El `far` por defecto (60 m) recorta los planos grandes por completo.
     const { camera } = XR8.Threejs.xrScene();
@@ -156,7 +150,6 @@ async function cargarModelo({ url, esDemo }) {
       tipo: 'modelo-listo',
       escala: GRUPO.scale.x,
       tam: { x: +tam.x.toFixed(2), y: +tam.y.toFixed(2), z: +tam.z.toFixed(2) },
-      aviso,
     });
   } catch (e) {
     puenteEnviar({ tipo: 'error', motivo: `No se pudo cargar ${url}: ${e?.message ?? e}` });

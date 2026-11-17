@@ -219,22 +219,12 @@ async function cargar() {
 
     // Base en el piso y centro en el origen, igual que en la AR: así el
     // `Centrar` y el tope del piso significan lo mismo en las dos vistas.
-    let caja = new THREE.Box3().setFromObject(casa);
-    let centro = caja.getCenter(new THREE.Vector3());
+    const caja = new THREE.Box3().setFromObject(casa);
+    const centro = caja.getCenter(new THREE.Vector3());
     casa.position.set(-centro.x, -caja.min.y, -centro.z);
 
-    let tam = medir(casa);
-
-    // Un GLB exportado en centímetros entra como 100× y la cámara queda
-    // adentro del modelo: se corrige y se avisa, en vez de mostrar el vacío.
-    if (tam.x > 100 || tam.y > 100 || tam.z > 100) {
-      casa.scale.setScalar(0.01);
-      caja = new THREE.Box3().setFromObject(casa);
-      centro = caja.getCenter(new THREE.Vector3());
-      casa.position.set(-centro.x, -caja.min.y, -centro.z);
-      tam = medir(casa);
-      mostrarError('El modelo venía en centímetros: se muestra a escala 1/100.');
-    }
+    // Escala 1:1: el export del editor sale en metros, no se reescala nunca.
+    const tam = medir(casa);
 
     casa.traverse((o) => {
       if (o.isMesh && o.material) o.material.side = THREE.DoubleSide;
