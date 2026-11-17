@@ -14,8 +14,21 @@ import { puenteEnviar } from './puente.js';
 export const GRUPO = new THREE.Group();
 GRUPO.name = 'dizelf-grupo';
 
-let ultimoEstado = null;
 let estadoEnviado = '';
+let candidato = null;
+let candidatoDesde = 0;
+
+/**
+ * 8th Wall solo reporta 'NORMAL' o 'LIMITED' (no existe 'LOST'), y al arrancar
+ * manda 'LIMITED' con reason 'INITIALIZING'. Sin separar los dos casos el HUD
+ * acusaba "tracking perdido" desde el primer frame, incluso con todo bien.
+ */
+const ESTABILIDAD_MS = 700;
+
+function motivoDeTracking(realidad) {
+  if (realidad.trackingStatus === 'NORMAL') return 'ok';
+  return realidad.trackingReason === 'INITIALIZING' ? 'inicializando' : 'limitado';
+}
 
 /** De dónde sale el GLB: sin `api` → demo empaquetado; con `api` → backend. */
 function resolverUrlModelo() {
@@ -173,18 +186,32 @@ export const moduloEscena = () => ({
     window.dispatchEvent(new CustomEvent('dizelf:camara', { detail: { status: 'exception', detail: motivo } }));
   },
 
-  /** Reporta el estado del tracking al HUD y al puente. */
+  /**
+   * Reporta el estado del tracking al HUD y al puente.
+   *
+   * El estado oscila mientras el teléfono se mueve, así que solo se avisa
+   * cuando el motivo nuevo se mantiene ESTABILIDAD_MS: sin esto el chip
+   * parpadeaba entre "estable" y "perdido" a 30 fps.
+   */
   onUpdate: ({ processCpuResult }) => {
     const realidad = processCpuResult?.reality;
-    if (!realidad) return;
-    const estado = realidad.trackingStatus;
-    if (!estado || estado === ultimoEstado) return;
-    ultimoEstado = estado;
+    if (!realidad?.trackingStatus) return;
 
-    const valor = estado === 'NORMAL' ? 'ok' : 'perdido';
-    if (valor === estadoEnviado) return;
-    estadoEnviado = valor;
-    puenteEnviar({ tipo: 'tracking', valor });
-    window.dispatchEvent(new CustomEvent('dizelf:tracking', { detail: valor }));
+    const motivo = motivoDeTracking(realidad);
+    if (motivo !== candidato) {
+      candidato = motivo;
+      candidatoDesde = performance.now();
+      return;
+    }
+    if (performance.now() - candidatoDesde < ESTABILIDAD_MS) return;
+    if (motivo === estadoEnviado) return;
+    estadoEnviado = motivo;
+
+    const detalle =
+      motivo === 'ok'
+        ? { valor: 'ok' }
+        : { valor: 'perdido', motivo }; // el valor viejo se mantiene: el APK ya instalado lo entiende
+    puenteEnviar({ tipo: 'tracking', ...detalle });
+    window.dispatchEvent(new CustomEvent('dizelf:tracking', { detail: detalle }));
   },
 });

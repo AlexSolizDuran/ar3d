@@ -83,8 +83,15 @@ window.addEventListener('dizelf:mensaje', (e) => {
   }
 });
 window.addEventListener('dizelf:tracking', (e) => {
-  if (e.detail === 'ok') estado('Tracking estable · camina alrededor', 'ok');
-  else estado('Tracking perdido · apunta a una superficie con textura', 'perdido');
+  // Acepta string (versión vieja) y { valor, motivo } (nueva).
+  const detalle = typeof e.detail === 'string' ? { valor: e.detail } : (e.detail ?? {});
+  const { valor, motivo } = detalle;
+
+  if (valor === 'ok') return estado('Tracking estable · camina alrededor', 'ok');
+  if (motivo === 'inicializando') {
+    return estado('Calibrando… mueve el teléfono de adelante hacia atrás', 'info');
+  }
+  return estado('Tracking limitado · más luz, más textura, movete despacio', 'perdido');
 });
 
 function esMovil() {
