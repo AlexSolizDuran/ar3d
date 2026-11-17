@@ -23,6 +23,10 @@ function resolverUrlModelo() {
   const id = q.get('modelo') ?? 'demo';
   const api = q.get('api');
   const token = q.get('token');
+  // La app móvil descarga el GLB con su `Bearer` y pasa una URL prefirmada del
+  // bucket: así el JWT de sesión nunca entra a la URL del WebView (P20).
+  const glb = q.get('glb');
+  if (glb) return { id: 'proyecto', url: glb, esDemo: false };
   if (!api) return { id, url: `./modelos/${id}.glb`, esDemo: id === 'demo' };
   const base = api.replace(/\/$/, '');
   const url =

@@ -22,7 +22,9 @@ Es un sitio estático puro: no hay build, no hay Node, no hay Next.
 ```
 ?modelo=<id>    id del modelo
 ?api=<base>     base del backend; si falta, carga ./modelos/<id>.glb
-?token=<jwt>    token para el backend (opcional)
+?token=<jwt>    token para el backend (opcional; hoy el guard no lo lee, ver plan §14.8)
+?glb=<url>      URL absoluta del GLB, ya firmada (la usa la app móvil: el token
+                de sesión nunca entra a la página)
 cam=front|back  fuerza la cámara (algunos equipos fallan con la trasera por defecto)
 auto            salta la pantalla "Iniciar AR" (solo si el permiso ya está concedido)
 debug           activa los logs verbose del engine
