@@ -23,9 +23,21 @@ Es un sitio estático puro: no hay build, no hay Node, no hay Next.
 ?modelo=<id>    id del modelo
 ?api=<base>     base del backend; si falta, carga ./modelos/<id>.glb
 ?token=<jwt>    token para el backend (opcional)
+cam=front|back  fuerza la cámara (algunos equipos fallan con la trasera por defecto)
+auto            salta la pantalla "Iniciar AR" (solo si el permiso ya está concedido)
+debug           activa los logs verbose del engine
 ```
 
 Sin parámetros → demo de 1 m.
+
+## Por qué hay un botón "Iniciar AR"
+
+El engine **no pide la cámara**. Su session manager comprueba el permiso y, si
+sigue en `prompt`, aborta con `No valid session manager to handle this session`:
+pantalla negra y ni un aviso del navegador. Por eso la página pide el permiso
+explícitamente con `getUserMedia` dentro del clic del botón antes de `XR8.run`.
+**No quitar esa puerta de inicio.** (En el APK el permiso ya viene concedido, así
+que arranca sola.)
 
 ## Desplegar en Vercel (recomendado para esta prueba)
 

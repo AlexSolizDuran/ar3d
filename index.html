@@ -54,6 +54,25 @@
       text-decoration: none; line-height: 1.3;
     }
     #creditos:hover { color: #fff; }
+
+    /* Puerta de inicio: el motor exige el permiso YA concedido y solo un
+       toque del usuario puede pedirlo. Sin esto: pantalla negra sin aviso. */
+    #inicio {
+      position: fixed; inset: 0; z-index: 50;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 16px; padding: 24px; text-align: center; color: #f9fafb;
+      background: radial-gradient(circle at 50% 40%, #0e2a33 0%, #000 70%);
+    }
+    #inicio[hidden] { display: none; }
+    #inicio h1 { margin: 0; font-size: 20px; letter-spacing: .02em; }
+    #inicio p  { margin: 0; font-size: 13px; line-height: 1.5; color: #9ca3af; max-width: 34ch; }
+    #empezar {
+      font: inherit; font-size: 16px; font-weight: 600;
+      padding: 14px 28px; border-radius: 999px; border: 0;
+      background: #22d3ee; color: #082f36; cursor: pointer;
+    }
+    #empezar:active { transform: scale(.98); }
+    #empezar[disabled] { opacity: .55; }
   </style>
 
   <!-- Engine con SLAM. El chunk xr-slam.js se carga desde ./vendor/ (mismo origen). -->
@@ -65,6 +84,12 @@
 </head>
 <body>
   <canvas id="camerafeed"></canvas>
+
+  <div id="inicio">
+    <h1>dizelf AR · 1:1</h1>
+    <p>Necesita la cámara trasera. El cubo mide 1 m: compruébalo con cinta métrica.</p>
+    <button id="empezar" type="button">Iniciar AR</button>
+  </div>
 
   <div id="hud">
     <div>

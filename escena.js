@@ -155,6 +155,20 @@ export const moduloEscena = () => ({
     cargarModelo(resolverUrlModelo());
   },
 
+  /**
+   * El motor avisa aquí cada paso de la cámara. Sin este callback, un fallo de
+   * getUserMedia se ve como pantalla negra sin explicación.
+   */
+  onCameraStatusChange: ({ status, detail }) => {
+    window.dispatchEvent(new CustomEvent('dizelf:camara', { detail: { status, detail } }));
+  },
+
+  /** Errores internos del pipeline (sesión, WebGL, permisos). */
+  onException: (e) => {
+    const motivo = e?.error?.message ?? e?.message ?? String(e);
+    window.dispatchEvent(new CustomEvent('dizelf:camara', { detail: { status: 'exception', detail: motivo } }));
+  },
+
   /** Reporta el estado del tracking al HUD y al puente. */
   onUpdate: ({ processCpuResult }) => {
     const realidad = processCpuResult?.reality;
