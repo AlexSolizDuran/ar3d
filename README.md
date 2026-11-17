@@ -12,6 +12,7 @@ Es un sitio estático puro: no hay build, no hay Node, no hay Next.
 | `escena.js` | Luces, `GRUPO` (lo que mueve el dedo), demo de 1 m y carga del GLB. |
 | `gestos.js` | Arrastre sobre el piso, pinza para escalar, giro de dos dedos, doble toque para recentrar. |
 | `puente.js` | `postMessage` ⇄ `window.__comando`. Protocolo congelado. |
+| `plano.html` + `plano.js` | Vista 3D sin cámara: vuelo libre sobre el modelo (mandos en pantalla, tope en el piso). La usa el botón "3D" de la app. |
 | `vendor/` | `xr.js` + `xr-slam.js` (engine con SLAM), `xrextras.js`, `LICENSE`. |
 | `three/` | `three.module.js` **+ `three.core.js`** (three r185 está partido en dos: sin el segundo, todo el sitio se queda en "Cargando motor…") y los loaders GLTF/Draco. |
 | `draco/` | Decoder de Draco. |
@@ -31,6 +32,9 @@ debug           activa los logs verbose del engine
 ```
 
 Sin parámetros → demo de 1 m.
+
+`plano.html` acepta los mismos `?glb=` / `?modelo=demo`: sin parámetros muestra
+una casa de ejemplo generada por código.
 
 ## Por qué hay un botón "Iniciar AR"
 

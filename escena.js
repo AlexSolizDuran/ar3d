@@ -14,6 +14,14 @@ import { puenteEnviar } from './puente.js';
 export const GRUPO = new THREE.Group();
 GRUPO.name = 'dizelf-grupo';
 
+/**
+ * Dónde arranca el modelo: delante de la cámara, no debajo de los pies.
+ *
+ * Con el pivote en el origen el plano quedaba justo en la vertical del usuario
+ * y no se veía nada al levantar el teléfono.
+ */
+export const POSICION_MODELO = new THREE.Vector3(0, 0, -1.8);
+
 let estadoEnviado = '';
 let candidato = null;
 let candidatoDesde = 0;
@@ -113,24 +121,25 @@ async function cargarModelo({ url, esDemo }) {
     const gltf = await loader.loadAsync(url);
     const casa = gltf.scene;
 
-    // Pivote al centro del piso y base en Y = 0.
-    const box = new THREE.Box3().setFromObject(casa);
-    const centro = box.getCenter(new THREE.Vector3());
-    casa.position.set(-centro.x, -box.min.y, -centro.z);
-
     // P1: el editor Pascal exporta en metros. La tabla queda como salvaguarda.
     const unidad = Number(gltf.userData?.unidad ?? 1);
     if (unidad !== 1) casa.scale.setScalar(unidad);
 
-    const caja = new THREE.Box3().setFromObject(casa);
-    const tam = caja.getSize(new THREE.Vector3());
-    const mayor = Math.max(tam.x, tam.y, tam.z);
-    if (mayor < 1 || mayor > 100) {
-      puenteEnviar({
-        tipo: 'error',
-        motivo: `Dimensiones fuera de rango: ${mayor.toFixed(2)} m. ¿Unidades del GLB?`,
-      });
+    let tam = centrarEnPiso(casa);
+    let aviso = null;
+
+    // Un GLB en centímetros llega 100× más grande: la cámara queda adentro, el
+    // `far` no alcanza y se ve "nada". Se corrige en vez de dejar el vacío.
+    if (Math.max(tam.x, tam.y, tam.z) > 100) {
+      casa.scale.multiplyScalar(0.01);
+      tam = centrarEnPiso(casa);
+      aviso = 'El modelo venía en centímetros: se muestra a escala 1/100.';
     }
+
+    // El `far` por defecto (60 m) recorta los planos grandes por completo.
+    const { camera } = XR8.Threejs.xrScene();
+    camera.far = Math.max(60, Math.max(tam.x, tam.y, tam.z) * 3);
+    camera.updateProjectionMatrix();
 
     casa.traverse((o) => {
       if (o.isMesh) {
@@ -141,10 +150,26 @@ async function cargarModelo({ url, esDemo }) {
     });
 
     GRUPO.add(casa);
-    puenteEnviar({ tipo: 'modelo-listo', escala: GRUPO.scale.x });
+    GRUPO.position.copy(POSICION_MODELO);
+
+    puenteEnviar({
+      tipo: 'modelo-listo',
+      escala: GRUPO.scale.x,
+      tam: { x: +tam.x.toFixed(2), y: +tam.y.toFixed(2), z: +tam.z.toFixed(2) },
+      aviso,
+    });
   } catch (e) {
     puenteEnviar({ tipo: 'error', motivo: `No se pudo cargar ${url}: ${e?.message ?? e}` });
   }
+}
+
+/** Pivote al centro del piso y base en Y = 0. Devuelve el tamaño en metros. */
+function centrarEnPiso(objeto) {
+  objeto.position.set(0, 0, 0);
+  const caja = new THREE.Box3().setFromObject(objeto);
+  const centro = caja.getCenter(new THREE.Vector3());
+  objeto.position.set(-centro.x, -caja.min.y, -centro.z);
+  return new THREE.Box3().setFromObject(objeto).getSize(new THREE.Vector3());
 }
 
 export const moduloEscena = () => ({
@@ -154,7 +179,7 @@ export const moduloEscena = () => ({
     const { scene, camera, renderer } = XR8.Threejs.xrScene();
 
     camera.near = 0.05; // 5 cm: sin esto el modelo desaparece al acercarse
-    camera.far = 60;
+    camera.far = 200; // se amplía según el tamaño real cuando llega el GLB
 
     scene.add(GRUPO);
     scene.add(new THREE.HemisphereLight(0xffffff, 0x666666, 1.2));

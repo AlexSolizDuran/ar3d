@@ -3,7 +3,7 @@
  * La cámara la controla el SLAM; el dedo escribe sobre GRUPO.
  */
 import * as THREE from 'three';
-import { GRUPO } from './escena.js';
+import { GRUPO, POSICION_MODELO } from './escena.js';
 
 const planoPiso = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 const raycaster = new THREE.Raycaster();
@@ -123,7 +123,7 @@ export function estaBloqueado() {
 }
 
 export function reset() {
-  GRUPO.position.set(0, 0, 0);
+  GRUPO.position.copy(POSICION_MODELO);
   GRUPO.rotation.set(0, 0, 0);
   GRUPO.scale.setScalar(1);
 }

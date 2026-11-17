@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>dizelf · vista 3D</title>
+  <meta name="theme-color" content="#070d18" />
+
+  <style>
+    :root { color-scheme: dark; --acento: #22d3ee; --borde: rgba(148, 163, 184, .22); }
+    html, body {
+      margin: 0; height: 100%; overflow: hidden; background: #070d18;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      -webkit-user-select: none; user-select: none;
+    }
+    #vista { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+
+    #hud {
+      position: fixed; inset: 0; pointer-events: none;
+      display: flex; flex-direction: column; justify-content: space-between;
+      padding: calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset-bottom) + 12px);
+    }
+
+    #estado {
+      align-self: flex-start;
+      background: rgba(7, 13, 24, .78); color: #e2e8f0;
+      border: 1px solid var(--borde); border-radius: 999px;
+      padding: 7px 12px; font-size: 12px; font-weight: 500;
+      backdrop-filter: blur(6px);
+    }
+    #estado[data-tipo="ok"]    { border-color: rgba(34, 211, 238, .45); color: #a5f3fc; }
+    #estado[data-tipo="error"] { border-color: rgba(248, 113, 113, .45); color: #fecaca; }
+
+    #error {
+      display: none; margin-top: 8px; max-width: 46ch;
+      background: rgba(127, 29, 29, .92); color: #fff;
+      font-size: 12px; line-height: 1.45; white-space: pre-wrap;
+      padding: 10px 12px; border-radius: 12px;
+    }
+
+    /* Mandos: D-pad a la izquierda, altura a la derecha. Son pointer-events
+       auto porque el resto del HUD no debe robarle el arrastre al canvas. */
+    .mandos {
+      display: flex; align-items: flex-end; justify-content: space-between;
+    }
+    .pad {
+      pointer-events: auto;
+      display: grid; grid-template-columns: repeat(3, 54px); grid-template-rows: repeat(3, 54px);
+      gap: 6px;
+    }
+    .pad .arriba  { grid-area: 1 / 2; }
+    .pad .izq     { grid-area: 2 / 1; }
+    .pad .der     { grid-area: 2 / 3; }
+    .pad .abajo   { grid-area: 3 / 2; }
+    .pad .centro  { grid-area: 2 / 2; }
+
+    .tecla {
+      pointer-events: auto; touch-action: none;
+      display: flex; align-items: center; justify-content: center;
+      font: inherit; font-size: 20px; line-height: 1;
+      color: #e2e8f0; background: rgba(7, 13, 24, .82);
+      border: 1px solid var(--borde); border-radius: 14px;
+      backdrop-filter: blur(6px);
+    }
+    .tecla:active, .tecla[data-activo="1"] {
+      background: rgba(34, 211, 238, .18); border-color: rgba(34, 211, 238, .5); color: #a5f3fc;
+    }
+
+    .altura { pointer-events: auto; display: flex; flex-direction: column; gap: 6px; }
+
+    #reiniciar {
+      pointer-events: auto; font: inherit; font-size: 11px; font-weight: 600;
+      color: #94a3b8; background: rgba(7, 13, 24, .82);
+      border: 1px solid var(--borde); border-radius: 999px;
+      padding: 7px 12px; margin-bottom: 2px;
+    }
+
+    #tam {
+      font-size: 11px; color: #64748b; margin-top: 8px;
+      font-variant-numeric: tabular-nums;
+    }
+  </style>
+
+  <script type="importmap">
+    { "imports": { "three": "./three/three.module.js" } }
+  </script>
+</head>
+<body>
+  <canvas id="vista"></canvas>
+
+  <div id="hud">
+    <div>
+      <div id="estado" data-tipo="info">Cargando la vista 3D…</div>
+      <div id="error"></div>
+      <div id="tam"></div>
+    </div>
+
+    <div class="mandos">
+      <div class="pad">
+        <button class="tecla arriba" data-mover="adelante" type="button" aria-label="Adelante">▲</button>
+        <button class="tecla izq" data-mover="izquierda" type="button" aria-label="Izquierda">◀</button>
+        <div class="centro"></div>
+        <button class="tecla der" data-mover="derecha" type="button" aria-label="Derecha">▶</button>
+        <button class="tecla abajo" data-mover="atras" type="button" aria-label="Atrás">▼</button>
+      </div>
+
+      <div class="altura">
+        <button id="reiniciar" type="button">Centrar</button>
+        <button class="tecla" data-mover="subir" type="button" aria-label="Subir">⇧</button>
+        <button class="tecla" data-mover="bajar" type="button" aria-label="Bajar">⇩</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./plano.js"></script>
+</body>
+</html>
