@@ -21,8 +21,8 @@ const $tam = document.getElementById('tam');
 
 /** Altura mínima de la cámara: el piso está en y = 0. */
 const PISO_MIN = 0.25;
-const VELOCIDAD = 3.2;      // m/s en el plano horizontal
-const VELOCIDAD_Y = 2.0;    // m/s al subir/bajar
+const VELOCIDAD = 3.2;      // m/s en el plano horizontal (modelos chicos)
+const VELOCIDAD_Y = 2.0;    // m/s al subir/bajar (modelos chicos)
 const OJO = 1.6;            // altura de arranque, en metros
 const SENSIBILIDAD = 0.0032;
 
@@ -149,6 +149,16 @@ let yaw = 0;
 let pitch = -0.06;
 let limite = 40;
 
+/**
+ * Velocidad y rango de dibujo del modelo actual.
+ *
+ * Fijos no sirven: con un plano de 120 m, 3.2 m/s tarda 37 s en cruzarlo y la
+ * niebla (35–120 m) tapa el modelo entero desde el encuadre inicial, así que
+ * la vista parece vacía.
+ */
+let velocidad = VELOCIDAD;
+let velocidadY = VELOCIDAD_Y;
+
 const mover = {
   adelante: false,
   atras: false,
@@ -177,6 +187,22 @@ function centrarVista(tam) {
   const dir = objetivo.sub(posicion).normalize();
   yaw = Math.atan2(-dir.x, -dir.z);
   pitch = Math.asin(THREE.MathUtils.clamp(dir.y, -1, 1));
+
+  // La niebla empieza más lejos que el modelo y el plano lejano lo cubre
+  // entero: antes, un modelo grande se dibujaba del color del fondo y parecía
+  // que no había nada.
+  escena.fog.near = distancia * 2;
+  escena.fog.far = distancia * 5;
+  camara.far = Math.max(200, distancia * 8);
+  // `near` fijo en 5 cm con un `far` de kilómetros arruina el z-buffer; se
+  // acerca solo cuando la escena es enorme.
+  camara.near = Math.min(0.5, Math.max(0.05, distancia / 5000));
+  camara.updateProjectionMatrix();
+
+  // Cruzar el plano no puede depender de cuántos metros tenga: la velocidad
+  // acompaña al tamaño, con un mínimo cómodo para una casa de 10 m.
+  velocidad = Math.max(VELOCIDAD, mayor * 0.35);
+  velocidadY = Math.max(VELOCIDAD_Y, mayor * 0.25);
 
   limite = Math.max(30, mayor * 2.5);
   tamActual.copy(tam);
@@ -255,8 +281,15 @@ for (const tecla of teclas) {
   };
   tecla.addEventListener('pointerdown', (e) => {
     e.preventDefault();
-    tecla.setPointerCapture?.(e.pointerId);
+    // Primero el estado y después la captura: en WebViews donde
+    // `setPointerCapture` lanza (pointer id inválido) el mando respondía poco
+    // o nada. Sin captura, `pointerleave` igual suelta el botón.
     activar(true);
+    try {
+      tecla.setPointerCapture?.(e.pointerId);
+    } catch {
+      /* sin captura el botón sigue funcionando */
+    }
   });
   for (const evento of ['pointerup', 'pointercancel', 'pointerleave']) {
     tecla.addEventListener(evento, () => activar(false));
@@ -266,6 +299,24 @@ for (const tecla of teclas) {
 document.getElementById('reiniciar').addEventListener('click', () => {
   centrarVista(tamActual);
 });
+
+/**
+ * Suelta todos los mandos.
+ *
+ * Si el dedo sale de la pantalla o el WebView pierde el foco, el `pointerup`
+ * no llega y la cámara se queda viajando sola. Es un "arriba" pegado que en un
+ * plano grande termina fuera del modelo.
+ */
+function soltarTodo() {
+  for (const accion of Object.keys(mover)) {
+    mover[accion] = false;
+  }
+  for (const tecla of teclas) tecla.dataset.activo = '0';
+  arrastre = null;
+}
+window.addEventListener('pointerup', soltarTodo);
+window.addEventListener('pointercancel', soltarTodo);
+window.addEventListener('blur', soltarTodo);
 
 // Arrastrar para mirar.
 let arrastre = null;
@@ -288,6 +339,7 @@ const soltarArrastre = (e) => {
 };
 $canvas.addEventListener('pointerup', soltarArrastre);
 $canvas.addEventListener('pointercancel', soltarArrastre);
+$canvas.addEventListener('pointerleave', soltarArrastre);
 
 // Teclado, para probar en la computadora.
 const MAPA_TECLAS = {
@@ -343,13 +395,13 @@ function paso() {
 
   if (avance || lado) {
     const norma = Math.hypot(avance, lado) || 1;
-    const v = (VELOCIDAD * dt) / norma;
+    const v = (velocidad * dt) / norma;
     posicion.x += (-seno * avance + coseno * lado) * v;
     posicion.z += (-coseno * avance - seno * lado) * v;
   }
 
-  if (mover.subir) posicion.y += VELOCIDAD_Y * dt;
-  if (mover.bajar) posicion.y -= VELOCIDAD_Y * dt;
+  if (mover.subir) posicion.y += velocidadY * dt;
+  if (mover.bajar) posicion.y -= velocidadY * dt;
 
   // Única física: el piso. Los objetos se atraviesan a propósito.
   posicion.y = Math.max(PISO_MIN, posicion.y);
