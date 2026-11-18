@@ -172,18 +172,23 @@ const mover = {
 const tamActual = new THREE.Vector3(8, 3, 8);
 
 /**
- * Encuadre inicial: vista aérea en tres cuartos sobre una esquina del modelo.
+ * Encuadre inicial: vista en tres cuartos, cerca del modelo.
  *
  * Arrancar a la altura del ojo y de frente dejaba la cámara fuera de la casa y
- * con una pared gris ocupando toda la pantalla: el plano no se entendía.
+ * con una pared gris ocupando toda la pantalla. Con `mayor * 1.15 + 3` el
+ * modelo quedaba chico y lejos en el centro; ahora el encuadre es más cerrado
+ * (el terreno grande se recorta, que es justo lo que se quiere al abrir).
  */
 function centrarVista(tam) {
   const mayor = Math.max(tam.x, tam.z, 4);
-  const distancia = mayor * 1.15 + 3;
+  const distancia = mayor * 0.75 + 1.5;
+  // La altura acompaña al tamaño: 5 m para una casa y una vista en tres
+  // cuartos para un terreno de cientos de metros.
+  const altura = Math.max(3, tam.y * 1.2 + 1.5, distancia * 0.22);
 
-  posicion.set(distancia * 0.55, Math.max(4, tam.y * 1.6 + 3), distancia * 0.72);
+  posicion.set(distancia * 0.5, altura, distancia * 0.65);
 
-  const objetivo = new THREE.Vector3(0, Math.max(0.4, tam.y * 0.35), 0);
+  const objetivo = new THREE.Vector3(0, Math.max(0.4, tam.y * 0.4), 0);
   const dir = objetivo.sub(posicion).normalize();
   yaw = Math.atan2(-dir.x, -dir.z);
   pitch = Math.asin(THREE.MathUtils.clamp(dir.y, -1, 1));
